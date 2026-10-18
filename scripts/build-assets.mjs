@@ -4,7 +4,8 @@
 //   apk/unpacked/assets/<id>.png      → public/thumbs/<id>.webp
 //   apk/decoded/.../ic_decorate_*     → public/frames/<n>.webp + lib/frames.json
 //   apk/decoded/.../paint_style_*     → public/stamps/*.png
-import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+//   apk/decoded/.../(nút, icon...)    → public/ui/*  ·  shape_fill_N/shape_stroke_N → public/shapes/*
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
 
@@ -119,6 +120,64 @@ async function buildStamps() {
   console.log(`stamps: ${Object.keys(stamps).length + 1}`);
 }
 
+// Ảnh giao diện của app gốc (nút, icon thanh công cụ, sao, banner, hộp thoại...).
+const UI = [
+  "paint_close_btn", "paint_done_btn", "ic_magnifier_off", "ic_magnifier_on", "iv_operate_help",
+  "paint_draw_btn", "paint_draw_btn_sel", "paint_size_btn", "paint_size_btn_sel", "paint_color_btn", "paint_color_btn_sel",
+  "paint_bg_color_btn", "paint_bg_color_btn_sel", "paint_eraser_btn", "paint_eraser_btn_sel", "paint_undo_btn", "paint_redo_btn",
+  "paint_next_btn", "paint_start_btn", "paint_first_next", "paint_first_got",
+  "home_close_img", "home_continue_img", "home_restart_img", "ic_painted_finish",
+  "dialog_close_btn", "dialog_download_btn", "dialog_frame_btn", "dialog_share_btn",
+  "ic_dialog_redraw", "ic_dialog_delete", "ic_dialog_share", "ic_decorate_back", "ic_decroate_help", "ic_user_work_empty",
+  "ic_whiteboard_brush", "ic_whiteboard_brush_sel", "ic_whiteboard_color", "ic_whiteboard_size", "ic_whiteboard_size_sel",
+  "ic_whiteboard_erase", "ic_whiteboard_erase_sel", "ic_whiteboard_geometry", "ic_whiteboard_geometry_sel",
+  "ic_whiteboard_bg", "ic_whiteboard_bg_sel", "ic_whiteboard_photo", "ic_whiteboard_empty",
+  "setting_btn_back", "setting_ic_sound", "setting_ic_vibration", "setting_ic_version", "setting_ic_delete", "setting_ic_privacy",
+  ...[0, 1, 2, 3, 4, 5].map((n) => `ic_star_${n}`),
+  ...[1, 2, 3, 4, 5, 6].flatMap((n) => [`ic_paint_style_${n}`, `ic_style_${n}_logo`]),
+  ...[1, 2, 3, 4, 5].flatMap((n) => [`ic_pen_${n}`, `ic_pen_sample_${n}`]),
+  ...[3, 5, 7, 9, 12, 15, 18, 21, 25, 30, 37, 45].flatMap((n) => [`ic_line_${n}`, `ic_line_deep_${n}`]),
+];
+
+async function buildUi() {
+  fresh("public/ui");
+  await Promise.all(
+    UI.map(async (name) => {
+      const src = join(DRAWABLE, `${name}.png`);
+      const meta = await sharp(src).metadata();
+      // ảnh lớn thu về tối đa 300px (màn hình chỉ hiển thị cỡ 100–150 CSS px)
+      const img = meta.width > 300 && !name.startsWith("ic_line") && !name.startsWith("ic_paint_style") ? sharp(src).resize(300) : sharp(src);
+      await img.png({ compressionLevel: 9, palette: true, quality: 90 }).toFile(`public/ui/${name}.png`);
+    }),
+  );
+  // ảnh nền lớn → webp
+  await sharp(join(DRAWABLE, "ic_home_banner.png")).resize(1024).webp({ quality: 82 }).toFile("public/ui/ic_home_banner.webp");
+  await sharp(join(DRAWABLE, "dialog_bg.jpg")).resize(540).webp({ quality: 80 }).toFile("public/ui/dialog_bg.webp");
+  for (let n = 1; n <= 15; n++) {
+    await sharp(join(DRAWABLE, `ic_decorate_preview_${n}.jpg`)).resize(200, 200).webp({ quality: 78 }).toFile(`public/ui/frame_preview_${n}.webp`);
+  }
+  // ảnh động của thanh tab dưới (assets/gif)
+  for (const n of [0, 1, 3]) {
+    copyFileSync(`apk/decoded/assets/gif/main_tab_enlarge_${n}.gif`, `public/ui/main_tab_enlarge_${n}.gif`);
+    // khung đầu (xám) cho tab chưa chọn
+    await sharp(`apk/decoded/assets/gif/main_tab_enlarge_${n}.gif`, { page: 0 }).png().toFile(`public/ui/main_tab_off_${n}.png`);
+  }
+  // ảnh minh hoạ thao tác hai ngón tay
+  for (const n of ["01", "02"]) copyFileSync(join(DRAWABLE, `paint_first_pic_${n}.gif`), `public/ui/paint_first_pic_${n}.gif`);
+  console.log(`ui: ${UI.length + 2 + 15 + 8}`);
+}
+
+/** Hình khối của bảng vẽ (shape_fill_N đặc / shape_stroke_N viền), tô màu khi vẽ. */
+async function buildShapes() {
+  fresh("public/shapes");
+  for (let n = 1; n <= 30; n++) {
+    for (const k of ["fill", "stroke"]) {
+      await sharp(join(DRAWABLE, `shape_${k}_${n}.png`)).resize(256, 256).png({ compressionLevel: 9 }).toFile(`public/shapes/${k}_${n}.png`);
+    }
+  }
+  console.log("shapes: 60");
+}
+
 async function buildIcons() {
   const src = ICON;
   await sharp(src).resize(192, 192).png().toFile("public/icon-192.png");
@@ -128,4 +187,4 @@ async function buildIcons() {
 }
 
 buildDrawings();
-await Promise.all([buildThumbs(), buildFrames(), buildStamps(), buildIcons()]);
+await Promise.all([buildThumbs(), buildFrames(), buildStamps(), buildIcons(), buildUi(), buildShapes()]);

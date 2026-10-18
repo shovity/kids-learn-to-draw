@@ -1,21 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { canvasToBlob, downloadBlob, fileStamp, shareBlob } from "@/lib/export";
+import { canvasToBlob, downloadBlob, fileStamp } from "@/lib/export";
 import { FRAMES, frameUrl, type FrameInfo } from "@/lib/manifest";
 import { play } from "@/lib/sound";
-import Icon from "./Icon";
+import { Img, Toast, useToast } from "./ui";
 
 type Place = { x: number; y: number; scale: number };
 
 /**
- * Treo tranh lên tường (DecorateActivity của app gốc): chọn khung/phòng, kéo và
- * chụm hai ngón để chỉnh vị trí, kích thước tranh trong ô khung.
+ * Treo tranh lên tường (DecorateActivity của app gốc): chọn phòng/khung ở dải dưới, kéo và
+ * chụm hai ngón để chỉnh vị trí, kích thước tranh trong khung, rồi "Lưu".
  */
-export default function DecorateSheet({ art, title, onClose }: { art: HTMLCanvasElement; title: string; onClose: () => void }) {
+export default function Decorate({ art, onClose }: { art: HTMLCanvasElement; onClose: () => void }) {
   const [frame, setFrame] = useState<FrameInfo>(FRAMES[0]);
   const [place, setPlace] = useState<Place>({ x: 0, y: 0, scale: 1 });
   const [img, setImg] = useState<HTMLImageElement | null>(null);
+  const [toast, flash] = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{ start: Place; ax: number; ay: number; dist: number } | null>(null);
@@ -30,7 +31,6 @@ export default function DecorateSheet({ art, title, onClose }: { art: HTMLCanvas
     };
   }, [frame]);
 
-  // vẽ khung + tranh
   useEffect(() => {
     const c = canvasRef.current;
     if (!c) return;
@@ -39,7 +39,14 @@ export default function DecorateSheet({ art, title, onClose }: { art: HTMLCanvas
     render(c.getContext("2d")!, frame, img, art, place);
   }, [art, frame, img, place]);
 
-  const exportBlob = async () => {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const saveImage = async () => {
+    play("tap");
     const c = document.createElement("canvas");
     const k = 2;
     c.width = frame.width * k;
@@ -47,7 +54,8 @@ export default function DecorateSheet({ art, title, onClose }: { art: HTMLCanvas
     const g = c.getContext("2d")!;
     g.scale(k, k);
     render(g, frame, img, art, place);
-    return canvasToBlob(c, "image/jpeg", 0.92);
+    downloadBlob(await canvasToBlob(c, "image/jpeg", 0.92), `tranh-treo-tuong-${fileStamp()}.jpg`);
+    flash("Đã lưu ảnh");
   };
 
   const local = (e: React.PointerEvent) => {
@@ -64,13 +72,17 @@ export default function DecorateSheet({ art, title, onClose }: { art: HTMLCanvas
   };
 
   return (
-    <div className="decorate">
+    <div className="decorate" role="dialog" aria-label="Treo tranh">
       <header className="decorate-top">
-        <button type="button" className="icon-btn" aria-label="Quay lại" onClick={onClose}>
-          <Icon name="back" />
+        <button type="button" className="decorate-back" aria-label="Quay lại" onClick={onClose}>
+          <Img name="ic_decorate_back" />
         </button>
-        <h3>Treo tranh</h3>
-        <span className="hint">Kéo hoặc chụm 2 ngón để chỉnh tranh</span>
+        <button type="button" className="decorate-help" aria-label="Hướng dẫn" onClick={() => flash("Bé có thể kéo và phóng to bức tranh cho đẹp hơn.")}>
+          <Img name="ic_decroate_help" />
+        </button>
+        <button type="button" className="decorate-save" onClick={() => void saveImage()}>
+          Lưu
+        </button>
       </header>
       <div className="decorate-stage">
         <canvas
@@ -104,46 +116,25 @@ export default function DecorateSheet({ art, title, onClose }: { art: HTMLCanvas
           }}
           onWheel={(e) => setPlace((p) => ({ ...p, scale: Math.max(0.4, Math.min(2.5, p.scale * Math.exp(-e.deltaY * 0.0015))) }))}
         />
+        <p className="decorate-tip">Kéo và phóng to tranh cho đẹp hơn.</p>
       </div>
       <div className="frame-list">
         {FRAMES.map((f) => (
           <button
             key={f.id}
             type="button"
-            className={`frame-thumb ${f.id === frame.id ? "is-active" : ""}`}
+            className={`frame-item ${f.id === frame.id ? "is-active" : ""}`}
             onClick={() => {
               play("tap");
               setFrame(f);
             }}
             aria-label={`Khung ${f.id}`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={frameUrl(f.id)} alt="" loading="lazy" />
+            <Img name={`frame_preview_${f.id}.webp`} />
           </button>
         ))}
       </div>
-      <div className="decorate-actions">
-        <button
-          type="button"
-          className="pill-btn ghost"
-          onClick={async () => {
-            play("tap");
-            downloadBlob(await exportBlob(), `tranh-treo-tuong-${fileStamp()}.jpg`);
-          }}
-        >
-          <Icon name="download" size={18} /> Tải về
-        </button>
-        <button
-          type="button"
-          className="pill-btn"
-          onClick={async () => {
-            play("tap");
-            await shareBlob(await exportBlob(), `tranh-treo-tuong-${fileStamp()}.jpg`, title);
-          }}
-        >
-          <Icon name="share" size={18} /> Chia sẻ
-        </button>
-      </div>
+      <Toast text={toast} />
     </div>
   );
 }

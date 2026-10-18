@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { loadStamps, renderShape, shapePath, type BrushId, type ShapeId, type ShapeOp, type StrokeOp, type StrokeRenderer } from "@/lib/brush";
+import { SHAPE_COUNT, drawShape, loadShapes, loadStamps, shapeUrl, type BrushId, type ShapeOp, type StrokeOp, type StrokeRenderer } from "@/lib/brush";
 import { blobToImage, canvasToBlob } from "@/lib/export";
 import { OpLayer, newSeed } from "@/lib/layer";
 import { Particles } from "@/lib/particles";
@@ -10,19 +10,18 @@ import { play, vibrate } from "@/lib/sound";
 import { Stage, type WorldPt } from "@/lib/stage";
 import { loadWork, removeWork, saveWork } from "@/lib/storage";
 import DoneDialog from "./DoneDialog";
-import Icon from "./Icon";
-import { ALL_COLORS, BG_COLORS, BrushPicker, CustomColor, IconButton, Modal, Sheet, SizePicker, Swatches, Toast } from "./ui";
+import { ALL_COLORS, BG_COLORS, Bubble, ColorPicker, Confirm, Img, ImgButton, PaletteRow, SizeList, Toast, anchorOf, useToast } from "./ui";
 
-type Tool = "brush" | "eraser" | "fill" | "shape";
-type SheetId = null | "brush" | "size" | "shape" | "bg" | "colors";
+type Tool = "brush" | "eraser" | "shape";
+type Popup = null | { id: "pen" | "color" | "size" | "shape" | "bg"; x: number };
 
-const SHAPES: { id: ShapeId; title: string }[] = [
-  { id: "line", title: "Đường thẳng" },
-  { id: "rect", title: "Hình chữ nhật" },
-  { id: "ellipse", title: "Hình tròn" },
-  { id: "triangle", title: "Tam giác" },
-  { id: "star", title: "Ngôi sao" },
-  { id: "heart", title: "Trái tim" },
+// 5 cây bút của bảng vẽ (ic_pen_N + ic_pen_sample_N) ứng với các kiểu cọ.
+const PENS: { brush: BrushId; title: string }[] = [
+  { brush: "pen", title: "Bút chì" },
+  { brush: "air", title: "Cọ mềm" },
+  { brush: "fountain", title: "Bút dạ" },
+  { brush: "marker", title: "Bút highlight" },
+  { brush: "crayon", title: "Bút sáp" },
 ];
 
 /** Bảng vẽ tự do (WhiteBoardActivity của app gốc). */
@@ -30,21 +29,21 @@ export default function BoardScreen() {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
-  const [workId, setWorkId] = useState<string | null>(null);
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
   const [tool, setTool] = useState<Tool>("brush");
-  const [brush, setBrush] = useState<BrushId>("pen");
-  const [shape, setShape] = useState<ShapeId>("ellipse");
-  const [filled, setFilled] = useState(false);
-  const [color, setColor] = useState("#1e6fe8");
+  const [pen, setPen] = useState(0);
+  const [shape, setShape] = useState(3);
+  const [filled, setFilled] = useState(true);
+  const [color, setColor] = useState("#5cbdff");
   const [size, setSize] = useState(9);
+  const [eraserSize, setEraserSize] = useState(25);
   const [bg, setBg] = useState("#ffffff");
   const [hasPhoto, setHasPhoto] = useState(false);
-  const [sheet, setSheet] = useState<SheetId>(null);
-  const [confirmClear, setConfirmClear] = useState(false);
+  const [popup, setPopup] = useState<Popup>(null);
+  const [pickerKey, setPickerKey] = useState(0);
+  const [confirmExit, setConfirmExit] = useState(false);
   const [doneOpen, setDoneOpen] = useState(false);
-  const [zoomed, setZoomed] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, flash] = useToast();
   const [, setTick] = useState(0);
   const rerender = useCallback(() => setTick((t) => t + 1), []);
 
@@ -55,35 +54,34 @@ export default function BoardScreen() {
     active: null as { op: StrokeOp; r: StrokeRenderer } | null,
     shapeDraft: null as ShapeOp | null,
     last: null as WorldPt | null,
-    downAt: null as WorldPt | null,
     particles: new Particles(),
     dirty: false,
-    saveTimer: 0 as number,
-    createdAt: Date.now(),
+    saveTimer: 0,
     tool: "brush" as Tool,
-    brush: "pen" as BrushId,
-    shape: "ellipse" as ShapeId,
-    filled: false,
+    pen: 0,
+    shape: 3,
+    filled: true,
     color: "",
     size: 9,
+    eraserSize: 25,
     bg: "#ffffff",
     id: "",
   }).current;
-  Object.assign(s, { tool, brush, shape, filled, color, size, bg });
+  Object.assign(s, { tool, pen, shape, filled, color, size, eraserSize, bg });
 
-  // Chọn tranh: ?id=board_… để mở lại, không có thì tạo mới theo hướng màn hình.
+  // ?id=board_… để mở lại; không có thì tạo tờ mới vừa khít khung vẽ.
   useEffect(() => {
     let alive = true;
     (async () => {
-      await loadStamps();
+      await Promise.all([loadStamps(), loadShapes()]);
       const q = new URLSearchParams(window.location.search).get("id");
       const work = q ? await loadWork(q) : undefined;
       if (!alive) return;
-      const portrait = window.innerHeight >= window.innerWidth;
-      const d = work?.w && work.h ? { w: work.w, h: work.h } : portrait ? { w: 800, h: 1060 } : { w: 1200, h: 820 };
-      const id = work?.id ?? `board_${Date.now()}`;
-      s.id = id;
-      const layer = new OpLayer(d.w, d.h, 1.6, { type: "color" });
+      const r = canvasRef.current?.getBoundingClientRect();
+      const ratio = r && r.width > 0 ? r.height / r.width : 1.3;
+      const d = work?.w && work.h ? { w: work.w, h: work.h } : { w: 800, h: Math.round(800 * Math.max(0.5, Math.min(2.2, ratio))) };
+      s.id = work?.id ?? `board_${Date.now()}`;
+      const layer = new OpLayer(d.w, d.h, 1.6);
       if (work?.paint) layer.setBase(await blobToImage(work.paint));
       if (work?.ink) {
         const img = await blobToImage(work.ink);
@@ -97,10 +95,8 @@ export default function BoardScreen() {
       if (work) {
         setBg(work.bg);
         s.bg = work.bg;
-        s.createdAt = Number(id.split("_")[1]) || Date.now();
       }
       s.layer = layer;
-      setWorkId(id);
       setDims(d);
     })();
     return () => {
@@ -136,13 +132,10 @@ export default function BoardScreen() {
     }
     const [paint, thumb, ink] = await Promise.all([
       canvasToBlob(l.canvas),
-      canvasToBlob(composite(320), "image/jpeg", 0.85),
+      canvasToBlob(composite(360), "image/jpeg", 0.85),
       s.photo ? canvasToBlob(s.photo, "image/jpeg", 0.88) : Promise.resolve(undefined),
     ]);
-    await saveWork(
-      { id: s.id, kind: "board", phase: "done", step: 0, progress: 100, bg: s.bg, stars: 0, updatedAt: Date.now(), w: l.width, h: l.height },
-      { paint, thumb, ink },
-    );
+    await saveWork({ id: s.id, kind: "board", phase: "done", step: 0, progress: 100, bg: s.bg, stars: 0, updatedAt: Date.now(), w: l.width, h: l.height }, { paint, thumb, ink });
   }, [composite, s]);
 
   const scheduleSave = useCallback(
@@ -170,90 +163,85 @@ export default function BoardScreen() {
     const canvas = canvasRef.current;
     if (!canvas || !dims || !s.layer) return;
     const layer = s.layer;
-    const stage = new Stage(canvas, dims.w, dims.h, {
-      animating: () => s.particles.active,
-      onViewChange: setZoomed,
-      draw: (g) => {
-        g.fillStyle = s.bg;
-        g.fillRect(0, 0, dims.w, dims.h);
-        if (s.photo) drawCover(g, s.photo, dims.w, dims.h);
-        g.drawImage(layer.canvas, 0, 0, dims.w, dims.h);
-        if (layer.liveCanvas) {
-          g.globalAlpha = 0.5;
-          g.drawImage(layer.liveCanvas, 0, 0, dims.w, dims.h);
-          g.globalAlpha = 1;
-        }
-        if (s.shapeDraft) {
-          // xem trước hình đang kéo (vẽ ở toạ độ thế giới, scale 1)
-          renderShapeWorld(g, s.shapeDraft);
-        }
-        s.particles.draw(g);
-      },
-      down: (p) => {
-        s.downAt = p;
-        s.last = p;
-        if (s.tool === "fill") return;
-        if (s.tool === "shape") {
-          s.shapeDraft = { kind: "shape", shape: s.shape, color: s.color, size: s.size, filled: s.filled, x0: p.x, y0: p.y, x1: p.x, y1: p.y };
-          return;
-        }
-        const op: StrokeOp = { kind: "stroke", brush: s.tool === "eraser" ? "eraser" : s.brush, color: s.color, size: s.size, pts: [p.x, p.y], seed: newSeed() };
-        const r = layer.beginStroke(op);
-        r.add(p.x, p.y);
-        s.active = { op, r };
-      },
-      move: (pts) => {
-        for (const p of pts) {
+    const stage = new Stage(
+      canvas,
+      dims.w,
+      dims.h,
+      {
+        animating: () => s.particles.active,
+        draw: (g) => {
+          g.fillStyle = s.bg;
+          g.fillRect(0, 0, dims.w, dims.h);
+          if (s.photo) drawCover(g, s.photo, dims.w, dims.h);
+          g.drawImage(layer.canvas, 0, 0, dims.w, dims.h);
+          if (layer.liveCanvas) {
+            g.globalAlpha = 0.5;
+            g.drawImage(layer.liveCanvas, 0, 0, dims.w, dims.h);
+            g.globalAlpha = 1;
+          }
           if (s.shapeDraft) {
-            s.shapeDraft.x1 = p.x;
-            s.shapeDraft.y1 = p.y;
-            continue;
+            g.globalAlpha = 0.8;
+            drawShape(g, s.shapeDraft);
+            g.globalAlpha = 1;
           }
-          const a = s.active;
-          if (!a || !s.last || Math.hypot(p.x - s.last.x, p.y - s.last.y) < 0.6) continue;
-          a.op.pts.push(p.x, p.y);
-          a.r.add(p.x, p.y);
+          s.particles.draw(g);
+        },
+        down: (p) => {
           s.last = p;
-        }
-      },
-      up: (p) => {
-        if (s.tool === "fill") {
-          const d0 = s.downAt;
-          if (d0 && Math.hypot(p.x - d0.x, p.y - d0.y) < 14 && layer.apply({ kind: "fill", x: p.x, y: p.y, color: s.color })) {
-            play("fill");
-            s.particles.burst(p.x, p.y, 10, 3);
-            rerender();
-            scheduleSave();
+          if (s.tool === "shape") {
+            s.shapeDraft = { kind: "shape", shape: s.shape, color: s.color, filled: s.filled, x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+            return;
           }
-          return;
-        }
-        if (s.shapeDraft) {
-          const sh = s.shapeDraft;
+          const eraser = s.tool === "eraser";
+          const op: StrokeOp = { kind: "stroke", brush: eraser ? "eraser" : PENS[s.pen].brush, color: s.color, size: (eraser ? s.eraserSize : s.size) * 1.6, pts: [p.x, p.y], seed: newSeed() };
+          const r = layer.beginStroke(op);
+          r.add(p.x, p.y);
+          s.active = { op, r };
+        },
+        move: (pts) => {
+          for (const p of pts) {
+            if (s.shapeDraft) {
+              s.shapeDraft.x1 = p.x;
+              s.shapeDraft.y1 = p.y;
+              continue;
+            }
+            const a = s.active;
+            if (!a || !s.last || Math.hypot(p.x - s.last.x, p.y - s.last.y) < 0.6) continue;
+            a.op.pts.push(p.x, p.y);
+            a.r.add(p.x, p.y);
+            s.last = p;
+          }
+        },
+        up: () => {
+          if (s.shapeDraft) {
+            const sh = s.shapeDraft;
+            s.shapeDraft = null;
+            if (Math.abs(sh.x1 - sh.x0) > 8 && Math.abs(sh.y1 - sh.y0) > 8) {
+              layer.apply(sh);
+              play("pop");
+              rerender();
+              scheduleSave();
+            }
+            return;
+          }
+          if (!s.active) return;
+          layer.endStroke();
+          s.active = null;
+          rerender();
+          scheduleSave();
+        },
+        cancel: () => {
           s.shapeDraft = null;
-          if (Math.hypot(sh.x1 - sh.x0, sh.y1 - sh.y0) > 6) {
-            layer.apply(sh);
-            play("pop");
-            rerender();
-            scheduleSave();
-          }
-          return;
-        }
-        if (!s.active) return;
-        layer.endStroke();
-        s.active = null;
-        rerender();
-        scheduleSave();
+          if (!s.active) return;
+          layer.endStroke();
+          layer.undo();
+          layer.redoOps.pop();
+          s.active = null;
+          rerender();
+        },
       },
-      cancel: () => {
-        s.shapeDraft = null;
-        if (!s.active) return;
-        layer.endStroke();
-        layer.undo();
-        layer.redoOps.pop();
-        s.active = null;
-        rerender();
-      },
-    });
+      { flat: true, padding: 0 },
+    );
     s.stage = stage;
     return () => {
       stage.dispose();
@@ -266,9 +254,9 @@ export default function BoardScreen() {
   }, [bg, hasPhoto, s]);
 
   const layer = s.layer;
-  const flash = (t: string) => {
-    setToast(t);
-    window.setTimeout(() => setToast((x) => (x === t ? null : x)), 2200);
+  const toggle = (id: NonNullable<Popup>["id"]) => (e: React.MouseEvent<HTMLElement>) => {
+    const x = anchorOf(e);
+    setPopup((p) => (p?.id === id ? null : { id, x }));
   };
 
   const pickPhoto = async (f: File) => {
@@ -287,240 +275,217 @@ export default function BoardScreen() {
     }
   };
 
+  const exit = async () => {
+    await save();
+    router.push("/#board");
+  };
+
   return (
-    <div className="screen draw-screen board-screen">
-      <header className="draw-top">
-        <IconButton
-          icon="back"
-          label="Về trang chủ"
-          onClick={async () => {
-            await save();
-            router.push("/");
+    <div className="screen board-screen">
+      <header className="board-top">
+        <ImgButton icon="paint_close_btn" label="Thoát" className="top-close" onClick={() => (layer && !layer.isEmpty ? setConfirmExit(true) : void exit())} />
+        <ImgButton
+          icon="paint_undo_btn"
+          label="Hoàn tác"
+          className={`top-undo ${layer?.canUndo ? "" : "dim"}`}
+          onClick={() => {
+            if (!layer?.canUndo) return;
+            layer.undo();
+            play("erase");
+            rerender();
+            scheduleSave();
+            s.stage?.invalidate();
           }}
         />
-        <div className="draw-progress">
-          <div className="draw-title">Bảng vẽ</div>
-        </div>
-        <IconButton icon="trash" label="Xoá hết" onClick={() => setConfirmClear(true)} disabled={!layer || (layer.isEmpty && !hasPhoto)} />
-        <IconButton
-          icon="check"
+        <ImgButton
+          icon="paint_redo_btn"
+          label="Làm lại"
+          className={`top-redo ${layer?.canRedo ? "" : "dim"}`}
+          onClick={() => {
+            if (!layer?.canRedo) return;
+            layer.redo();
+            rerender();
+            scheduleSave();
+            s.stage?.invalidate();
+          }}
+        />
+        <ImgButton
+          icon="paint_done_btn"
           label="Xong"
-          className="done-btn"
+          className="top-done"
           onClick={async () => {
+            if (layer?.isEmpty && !s.photo) {
+              flash("Bé chưa vẽ gì cả");
+              return;
+            }
             s.dirty = true;
             await save();
             s.particles.celebrate(dims?.w ?? 800, dims?.h ?? 800);
             play("success");
             vibrate(40);
-            window.setTimeout(() => setDoneOpen(true), 500);
+            window.setTimeout(() => setDoneOpen(true), 400);
           }}
         />
       </header>
 
-      <div className="stage-wrap">
+      <div className="board-area">
         <canvas ref={canvasRef} className="stage" />
-        {!workId && <div className="loading-dot" />}
-        {zoomed && (
-          <button type="button" className="fit-btn" onClick={() => s.stage?.resetView()} aria-label="Vừa màn hình">
-            <Icon name="fit" size={22} />
-          </button>
-        )}
+        {!dims && <div className="loading-ring" />}
       </div>
 
-      <footer className="color-bar">
-        <div className="palette-row">
-          {ALL_COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              className={`paint-chip ${color === c && tool !== "eraser" ? "is-active" : ""}`}
-              style={{ ["--c" as string]: c }}
-              aria-label={`Màu ${c}`}
-              onClick={() => {
-                play("pop");
-                setColor(c);
-                if (tool === "eraser") setTool("brush");
-              }}
-            />
-          ))}
-          <button type="button" className="paint-chip more" aria-label="Tự chọn màu" onClick={() => setSheet("colors")}>
-            <Icon name="palette" size={22} />
-          </button>
-        </div>
-        <div className="toolbar">
-          <IconButton icon="brush" label="Kiểu cọ" active={tool === "brush"} onClick={() => (tool === "brush" ? setSheet("brush") : setTool("brush"))} />
-          <IconButton icon="shapes" label="Hình khối" active={tool === "shape"} onClick={() => (tool === "shape" ? setSheet("shape") : setTool("shape"))} />
-          <IconButton icon="size" label="Cỡ cọ" onClick={() => setSheet("size")} />
-          <IconButton icon="bucket" label="Thùng sơn" active={tool === "fill"} onClick={() => setTool("fill")} />
-          <IconButton icon="eraser" label="Tẩy" active={tool === "eraser"} onClick={() => setTool("eraser")} />
-          <IconButton icon="bg" label="Nền" onClick={() => setSheet("bg")} />
-          <IconButton
-            icon="undo"
-            label="Hoàn tác"
-            disabled={!layer?.canUndo}
-            onClick={() => {
-              layer?.undo();
-              play("erase");
-              rerender();
-              scheduleSave();
-              s.stage?.invalidate();
-            }}
-          />
-          <IconButton
-            icon="redo"
-            label="Làm lại"
-            disabled={!layer?.canRedo}
-            onClick={() => {
-              layer?.redo();
-              rerender();
-              scheduleSave();
-              s.stage?.invalidate();
-            }}
-          />
-        </div>
+      <footer className="board-bar">
+        <ImgButton
+          icon="ic_whiteboard_brush"
+          label="Bút vẽ"
+          sel={tool === "brush"}
+          onClick={(e) => {
+            if (tool !== "brush") {
+              setTool("brush");
+              setPopup(null);
+            } else toggle("pen")(e);
+          }}
+        />
+        <ImgButton icon="ic_whiteboard_color" label="Chọn màu" onClick={toggle("color")} />
+        <ImgButton icon="ic_whiteboard_size" label="Cỡ bút" sel={popup?.id === "size"} onClick={toggle("size")} />
+        <ImgButton
+          icon="ic_whiteboard_erase"
+          label="Tẩy"
+          sel={tool === "eraser"}
+          onClick={(e) => {
+            if (tool !== "eraser") {
+              setTool("eraser");
+              setPopup(null);
+            } else toggle("size")(e);
+          }}
+        />
+        <ImgButton
+          icon="ic_whiteboard_geometry"
+          label="Hình khối"
+          sel={tool === "shape"}
+          onClick={(e) => {
+            setTool("shape");
+            toggle("shape")(e);
+          }}
+        />
+        <ImgButton icon="ic_whiteboard_bg" label="Nền" sel={popup?.id === "bg"} onClick={toggle("bg")} />
       </footer>
 
-      <Sheet open={sheet === "brush"} onClose={() => setSheet(null)} title="Chọn cọ">
-        <BrushPicker
-          value={brush}
-          color={color}
-          onChange={(b) => {
-            setBrush(b);
-            setTool("brush");
-            setSheet(null);
-          }}
-        />
-      </Sheet>
-      <Sheet open={sheet === "shape"} onClose={() => setSheet(null)} title="Hình khối">
-        <div className="shape-grid">
-          {SHAPES.map((sh) => (
-            <button
-              key={sh.id}
-              type="button"
-              className={`shape-item ${shape === sh.id ? "is-active" : ""}`}
-              onClick={() => {
-                play("tap");
-                setShape(sh.id);
-                setTool("shape");
-                setSheet(null);
-              }}
-            >
-              <ShapeIcon shape={sh.id} filled={filled} color={color} />
-              <span>{sh.title}</span>
+      {popup?.id === "pen" && (
+        <Bubble anchor={popup.x} width={290} onClose={() => setPopup(null)}>
+          <div className="pen-list">
+            {PENS.map((p, i) => (
+              <button
+                key={p.brush}
+                type="button"
+                className={`pen-row ${i === pen ? "is-active" : ""}`}
+                aria-label={p.title}
+                onClick={() => {
+                  play("tap");
+                  setPen(i);
+                  setPopup(null);
+                }}
+              >
+                <Img name={`ic_pen_sample_${i + 1}`} className="pen-sample" />
+                <Img name={`ic_pen_${i + 1}`} className="pen-icon" />
+              </button>
+            ))}
+          </div>
+        </Bubble>
+      )}
+      {popup?.id === "color" && (
+        <Bubble anchor={popup.x} width={310} onClose={() => setPopup(null)}>
+          <PaletteRow
+            className="quick-colors"
+            colors={ALL_COLORS}
+            value={color}
+            onChange={(c) => {
+              setColor(c);
+              setPickerKey((k) => k + 1);
+            }}
+          />
+          <ColorPicker key={pickerKey} value={color} onChange={setColor} />
+        </Bubble>
+      )}
+      {popup?.id === "size" && (
+        <Bubble anchor={popup.x} width={230} onClose={() => setPopup(null)}>
+          <SizeList
+            value={tool === "eraser" ? eraserSize : size}
+            onChange={(v) => {
+              if (tool === "eraser") setEraserSize(v);
+              else setSize(v);
+              setPopup(null);
+            }}
+          />
+        </Bubble>
+      )}
+      {popup?.id === "shape" && (
+        <Bubble anchor={popup.x} width={330} onClose={() => setPopup(null)}>
+          <div className="shape-mode">
+            <button type="button" className={filled ? "is-active" : ""} onClick={() => setFilled(true)}>
+              Hình đặc
             </button>
-          ))}
-        </div>
-        <label className="toggle-row">
-          <input type="checkbox" checked={filled} onChange={(e) => setFilled(e.target.checked)} />
-          <span>Tô đặc hình</span>
-        </label>
-      </Sheet>
-      <Sheet open={sheet === "size"} onClose={() => setSheet(null)} title="Cỡ cọ">
-        <SizePicker
-          value={size}
-          color={tool === "eraser" ? "#bbb" : color}
-          onChange={(v) => {
-            setSize(v);
-            setSheet(null);
-          }}
-        />
-      </Sheet>
-      <Sheet open={sheet === "colors"} onClose={() => setSheet(null)} title="Hộp màu">
-        <Swatches
-          colors={ALL_COLORS}
-          value={color}
-          onChange={(c) => {
-            setColor(c);
-            setSheet(null);
-          }}
-          big
-        />
-        <CustomColor value={color} onChange={setColor} />
-      </Sheet>
-      <Sheet open={sheet === "bg"} onClose={() => setSheet(null)} title="Nền tranh">
-        <Swatches
-          colors={BG_COLORS}
-          value={bg}
-          onChange={(c) => {
-            setBg(c);
-            scheduleSave();
-          }}
-          big
-        />
-        <CustomColor
-          value={bg}
-          onChange={(c) => {
-            setBg(c);
-            scheduleSave();
-          }}
-        />
-        <div className="modal-actions wrap">
-          <button type="button" className="pill-btn" onClick={() => photoRef.current?.click()}>
-            <Icon name="image" size={18} /> Chọn ảnh nền
-          </button>
-          {hasPhoto && (
-            <button
-              type="button"
-              className="pill-btn ghost"
-              onClick={() => {
+            <button type="button" className={!filled ? "is-active" : ""} onClick={() => setFilled(false)}>
+              Hình viền
+            </button>
+          </div>
+          <div className="shape-grid">
+            {Array.from({ length: SHAPE_COUNT }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                className={n === shape ? "is-active" : ""}
+                aria-label={`Hình ${n}`}
+                onClick={() => {
+                  play("tap");
+                  setShape(n);
+                  setTool("shape");
+                  setPopup(null);
+                  flash("Kéo trên giấy để vẽ hình");
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={shapeUrl(n, filled)} alt="" draggable={false} />
+              </button>
+            ))}
+          </div>
+        </Bubble>
+      )}
+      {popup?.id === "bg" && (
+        <Bubble anchor={popup.x} width={300} onClose={() => setPopup(null)}>
+          <PaletteRow
+            className="bg-grid"
+            colors={BG_COLORS}
+            value={hasPhoto ? null : bg}
+            onChange={(c) => {
+              setBg(c);
+              if (s.photo) {
                 s.photo = null;
                 setHasPhoto(false);
-                scheduleSave();
-              }}
-            >
-              Bỏ ảnh nền
-            </button>
-          )}
-        </div>
-        <input
-          ref={photoRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void pickPhoto(f);
-            e.target.value = "";
-            setSheet(null);
-          }}
-        />
-      </Sheet>
-
-      <Modal open={confirmClear} onClose={() => setConfirmClear(false)}>
-        <h3 className="modal-title">Xoá hết bảng vẽ?</h3>
-        <div className="modal-actions">
-          <button type="button" className="pill-btn ghost" onClick={() => setConfirmClear(false)}>
-            Thôi
-          </button>
-          <button
-            type="button"
-            className="pill-btn danger"
-            onClick={() => {
-              layer?.apply({ kind: "clear" });
-              s.photo = null;
-              setHasPhoto(false);
-              setConfirmClear(false);
-              play("erase");
-              rerender();
+              }
               scheduleSave();
-              s.stage?.invalidate();
             }}
-          >
-            Xoá
+          />
+          <button type="button" className="photo-btn" onClick={() => photoRef.current?.click()}>
+            <Img name="ic_whiteboard_photo" />
+            <span>{hasPhoto ? "Đổi ảnh nền" : "Chọn ảnh làm nền"}</span>
           </button>
-        </div>
-      </Modal>
-
-      {doneOpen && layer && (
-        <DoneDialog
-          title="Bảng vẽ của bé"
-          stars={0}
-          makeImage={() => composite(1400)}
-          onClose={() => setDoneOpen(false)}
-          onKeepColoring={() => setDoneOpen(false)}
-          onHome={() => router.push("/")}
-        />
+        </Bubble>
       )}
+      <input
+        ref={photoRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void pickPhoto(f);
+          e.target.value = "";
+          setPopup(null);
+        }}
+      />
+
+      <Confirm open={confirmExit} text="Thoát bây giờ? Tranh đã được lưu." ok="Có" onCancel={() => setConfirmExit(false)} onOk={() => void exit()} />
+      {doneOpen && layer && <DoneDialog makeImage={() => composite(1400)} onClose={() => setDoneOpen(false)} />}
       <Toast text={toast} />
     </div>
   );
@@ -531,32 +496,4 @@ function drawCover(g: CanvasRenderingContext2D, img: HTMLCanvasElement, w: numbe
   const dw = img.width * k;
   const dh = img.height * k;
   g.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
-}
-
-/** Xem trước hình đang kéo, vẽ theo transform hiện tại của Stage (toạ độ thế giới). */
-function renderShapeWorld(g: CanvasRenderingContext2D, op: ShapeOp) {
-  g.save();
-  g.lineCap = "round";
-  g.lineJoin = "round";
-  g.lineWidth = op.size;
-  g.strokeStyle = op.color;
-  g.fillStyle = op.color;
-  g.globalAlpha = 0.85;
-  g.beginPath();
-  shapePath(g, op);
-  if (op.filled && op.shape !== "line") g.fill();
-  else g.stroke();
-  g.restore();
-}
-
-function ShapeIcon({ shape, filled, color }: { shape: ShapeId; filled: boolean; color: string }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const c = ref.current;
-    if (!c) return;
-    const g = c.getContext("2d")!;
-    g.clearRect(0, 0, c.width, c.height);
-    renderShape(g, { kind: "shape", shape, color, size: 4, filled, x0: 8, y0: 8, x1: 52, y1: 52 }, 1);
-  }, [shape, filled, color]);
-  return <canvas ref={ref} width={60} height={60} />;
 }

@@ -39,15 +39,18 @@ export class Stage {
   private ro: ResizeObserver;
   private disposed = false;
   readonly padding: number;
+  /** tờ giấy phẳng, không bo góc/đổ bóng (màn vẽ trắng toàn màn hình như app gốc) */
+  readonly flat: boolean;
 
   constructor(
     readonly canvas: HTMLCanvasElement,
     readonly worldW: number,
     readonly worldH: number,
     private h: StageHandlers,
-    opts: { padding?: number } = {},
+    opts: { padding?: number; flat?: boolean } = {},
   ) {
     this.padding = opts.padding ?? 12;
+    this.flat = opts.flat ?? false;
     this.g = canvas.getContext("2d")!;
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(canvas);
@@ -275,18 +278,21 @@ export class Stage {
     const { x, y, w, h } = this.paperRect();
     // bóng đổ của tờ giấy
     g.setTransform(d, 0, 0, d, 0, 0);
+    const r = this.flat ? 0 : 14;
     g.save();
-    g.shadowColor = "rgba(40, 60, 100, 0.18)";
-    g.shadowBlur = 18;
-    g.shadowOffsetY = 6;
+    if (!this.flat) {
+      g.shadowColor = "rgba(40, 60, 100, 0.18)";
+      g.shadowBlur = 18;
+      g.shadowOffsetY = 6;
+    }
     g.fillStyle = "#fff";
     g.beginPath();
-    g.roundRect(x, y, w, h, 14);
+    g.roundRect(x, y, w, h, r);
     g.fill();
     g.restore();
     g.save();
     g.beginPath();
-    g.roundRect(x, y, w, h, 14);
+    g.roundRect(x, y, w, h, r);
     g.clip();
     const s = this.pxPerUnit;
     g.setTransform(d * s, 0, 0, d * s, d * x, d * y);

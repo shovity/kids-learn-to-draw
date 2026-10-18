@@ -4,31 +4,48 @@ Bé học vẽ từng nét theo hướng dẫn, tô màu rồi treo tranh lên t
 
 **Chơi ngay:** https://shovity.github.io/kids-learn-to-draw/
 
-| Chọn tranh | Vẽ theo nét | Tô màu | Treo tranh |
-| --- | --- | --- | --- |
-| ![Trang chủ](docs/home.png) | ![Vẽ theo nét](docs/trace.png) | ![Tô màu](docs/color.png) | ![Treo tranh](docs/decorate.png) |
+| Chọn tranh | Vẽ theo nét | Tô màu | Chia sẻ | Treo tranh | Bảng vẽ |
+| --- | --- | --- | --- | --- | --- |
+| ![Trang chủ](docs/home.png) | ![Vẽ theo nét](docs/trace.png) | ![Tô màu](docs/color.png) | ![Chia sẻ](docs/done.png) | ![Treo tranh](docs/decorate.png) | ![Bảng vẽ](docs/board.png) |
 
 ## Tính năng
 
-- **64 tranh** thuộc 8 chủ đề: con vật, trái cây, đồ ăn, bông hoa, cây cối, xe cộ, thời trang, đồ vật.
-- **Vẽ theo nét:** mỗi tranh tách thành từng nét theo thứ tự. Bàn tay minh hoạ đi trước, bé đi theo nét cam. Chỗ tô trúng chuyển xanh và bắn pháo hoa. Tô trúng khoảng 75% nét là sang bước tiếp; có nút bỏ qua.
-- **Tô màu:** bảng màu lấy từ tranh mẫu, cùng hộp màu đầy đủ. Có 6 kiểu cọ (bút mực, sáp màu, bút dạ, bút lông, bút máy, phun sơn), thùng sơn tô đúng vùng, tẩy, màu nền, hoàn tác/làm lại.
-- **Kính lúp** phóng to chỗ đang vẽ. Hai ngón tay để phóng to và di chuyển tranh.
-- **Hoàn thành:** chấm 1–3 sao theo độ chính xác khi tô nét. Có thể tải ảnh về, chia sẻ, hoặc đóng khung (15 khung/phòng).
-- **Vẽ ra giấy:** hiện từng nét để bé chép ra giấy thật, rồi chụp ảnh lưu lại.
-- **Bảng vẽ tự do** với cọ, hình khối, thùng sơn và ảnh nền.
-- **Tranh của bé:** gồm tranh đang vẽ, tranh đã xong và ảnh chụp, lưu ngay trên máy (IndexedDB), không cần tài khoản.
+Giao diện và luồng chơi bám sát app gốc: dùng lại ảnh nút, icon, ngôi sao, banner, khung tranh và hình khối trích từ APK.
+
+- **64 tranh**, 8 chủ đề: con vật, trái cây, đồ ăn, bông hoa, cây cối, xe cộ, thời trang, đồ vật.
+- **Vẽ theo nét:**
+  - Lúc đầu hiện cả tranh mẫu và nút *Bắt đầu*.
+  - Mỗi lần bấm ➜, một nét mới hiện dần kèm bàn tay chỉ đường. Các nét đã qua thành nét đứt màu đen.
+  - Dọc nét đang vẽ có chấm xanh. Bé vẽ đi qua chấm nào thì chấm đó chuyển xám và bắn pháo hoa.
+  - Tiến độ hiện ở giữa thanh trên (0–100%).
+- **Tô màu:**
+  - Hiện hết nét thì bấm ➜ lần nữa để sang tô màu.
+  - Có hàng màu lấy từ tranh mẫu, thẻ tranh mẫu ở góc, chọn màu nền.
+  - 6 kiểu cọ: bút chì, sáp màu, sáp mềm, bút lông dẹt, bút máy, cọ phun.
+  - 12 cỡ cọ, bảng chọn màu (vòng màu, đậm nhạt, độ trong), tẩy, hoàn tác/làm lại.
+- **Kính lúp** phóng to chỗ đang vẽ. Hai ngón tay để kéo và phóng to tranh.
+- **Chia sẻ tác phẩm:**
+  - Chấm 0–5 sao theo số chấm xanh đã chạm.
+  - Lưu ảnh, chia sẻ, hoặc đóng khung (15 phòng/khung).
+- **Bảng vẽ tự do:** 5 cây bút, 30 hình khối (đặc/viền), màu nền hoặc ảnh nền.
+- **Của bé:** có hai mục *Đang vẽ* và *Đã xong*. Nhấn giữ một tranh để vẽ lại, xoá hoặc chia sẻ.
+- Tranh lưu ngay trên máy (IndexedDB), không cần tài khoản.
 
 ## Nguồn gốc
 
-Đây là bản web dựng lại từ ứng dụng Android *Learn to draw* (`com.love.drawing.draw` 3.7). Ứng dụng gốc được phân tích bằng [REA](https://github.com/morluto/rea) (JADX headless + apktool):
+Đây là bản web dựng lại từ ứng dụng Android *Learn to draw* (`com.love.drawing.draw` 3.7). App gốc được phân tích bằng [REA](https://github.com/morluto/rea) (JADX headless + apktool):
 
-- `PaintActivity` / `DrawingBoardView`: luồng vẽ theo nét → tô màu, cách chấm điểm theo các điểm mẫu dọc nét, 6 kiểu cọ (`V = 0..5`).
-- `PaperActivity` / `PaperDrawView`: chế độ vẽ ra giấy từng bước.
-- `WhiteBoardActivity`, `DecorateActivity`: bảng vẽ và treo tranh.
-- Tài nguyên: SVG tranh mẫu (nhóm `block` = vùng màu, `line` = nét), ảnh mẫu, khung trang trí, mẫu đầu cọ.
+- `PaintActivity` / `DrawingBoardView`:
+  - Nút Start/Next gọi `W()`: hiện nét kế tiếp trong 1 giây, rồi rải chấm dọc nét.
+  - Chấm điểm `getScore()` ra 0–5 sao.
+  - Kiểu cọ `V = 0..5`.
+  - Sang tô màu sau nét cuối.
+- Layout `activity_paint`, `dialog_brush_size`, `dialog_paint_style`, `dialog_color_pick`, `dialog_draw_done`, `dialog_continue_or_restart`, `fragment_coor_home`, `activity_whiteboard`, `activity_decorate`, `activity_new_setting`: kích thước, màu (#5cbdff, #f0f0f0) và bố cục.
+- Tài nguyên:
+  - SVG tranh mẫu: nhóm `block` là vùng màu, nhóm `line` là nét.
+  - Ảnh mẫu, khung trang trí, mẫu đầu cọ, ảnh giao diện và ảnh động của thanh tab.
 
-Không đưa vào bản web: quảng cáo, mua trong ứng dụng, vòng quay xu và phần "AI style" (vốn cần máy chủ).
+Không đưa vào bản web: quảng cáo, mua trong ứng dụng, vòng quay xu, phần "AI style" (vốn cần máy chủ) và chế độ vẽ ra giấy.
 
 ## Chạy ở máy
 
@@ -40,8 +57,8 @@ npm run typecheck
 npm run build      # xuất trang tĩnh ra out/
 ```
 
-`npm run assets` tạo lại `public/` và `lib/*.json` từ APK đã giải nén trong `apk/` (thư mục này không được commit).
+`npm run assets` tạo lại `public/` và `lib/*.json` từ APK đã giải nén trong `apk/`. Thư mục `apk/` không được commit.
 
 ## Deploy
 
-Mỗi lần push lên `master`, workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) build bản tĩnh (`output: "export"`) với `NEXT_PUBLIC_BASE_PATH=/kids-learn-to-draw`, rồi deploy lên GitHub Pages. Đường dẫn tới file trong `public/` phải đi qua `asset()` trong `lib/manifest.ts`.
+Mỗi lần push lên `master`, workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) build bản tĩnh (`output: "export"`) với `NEXT_PUBLIC_BASE_PATH=/kids-learn-to-draw` rồi deploy lên GitHub Pages. Đường dẫn tới file trong `public/` phải đi qua `asset()` / `ui()` trong `lib/manifest.ts`.

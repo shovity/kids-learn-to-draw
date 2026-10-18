@@ -2,35 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { canvasToBlob, downloadBlob, fileStamp, shareBlob } from "@/lib/export";
+import { ui } from "@/lib/manifest";
 import { play } from "@/lib/sound";
-import DecorateSheet from "./DecorateSheet";
-import Icon from "./Icon";
-import { Modal, Stars } from "./ui";
+import Decorate from "./Decorate";
+import { Img, StarsImg, Toast, useToast } from "./ui";
 
-/** Hộp thoại khi vẽ xong (dialog_draw_done của app gốc): tải về, chia sẻ, đóng khung. */
+/** dialog_draw_done của app gốc: "Share my work" — Lưu / Đóng khung / Chia sẻ. */
 export default function DoneDialog({
-  title,
+  refImage,
   stars,
   makeImage,
   onClose,
-  onKeepColoring,
-  onRestart,
-  onHome,
 }: {
-  title: string;
-  stars: number;
+  refImage?: string;
+  stars?: number;
   makeImage: () => HTMLCanvasElement;
   onClose: () => void;
-  onKeepColoring?: () => void;
-  onRestart?: () => void;
-  onHome?: () => void;
 }) {
   // chụp tranh một lần khi mở hộp thoại
   const [canvas] = useState(makeImage);
   const [url, setUrl] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [decorate, setDecorate] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [toast, flash] = useToast();
 
   useEffect(() => {
     let u: string | null = null;
@@ -44,77 +38,71 @@ export default function DoneDialog({
     };
   }, [canvas]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !decorate && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [decorate, onClose]);
+
   const name = `tranh-cua-be-${fileStamp()}.png`;
 
+  if (decorate) return <Decorate art={canvas} onClose={() => setDecorate(false)} />;
+
   return (
-    <>
-      <Modal open={!decorate} onClose={onClose} className="done-modal">
-        <div className="done-burst" aria-hidden>
-          🎉
-        </div>
-        <h3 className="modal-title">Tuyệt vời!</h3>
-        {stars > 0 && <Stars n={stars} size={30} />}
-        <div className="done-preview">{url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={url} alt={title} />}</div>
-        <div className="done-actions">
-          <button
-            type="button"
-            className="round-action"
-            disabled={!blob}
-            onClick={() => {
-              play("tap");
-              if (blob) downloadBlob(blob, name);
-              setMsg("Đã lưu ảnh vào máy");
-            }}
-          >
-            <Icon name="download" />
-            <span>Tải về</span>
-          </button>
-          <button
-            type="button"
-            className="round-action"
-            disabled={!blob}
-            onClick={async () => {
-              play("tap");
-              if (!blob) return;
-              const r = await shareBlob(blob, name, title);
-              if (r === "downloaded") setMsg("Máy không hỗ trợ chia sẻ, đã tải ảnh về");
-            }}
-          >
-            <Icon name="share" />
-            <span>Chia sẻ</span>
-          </button>
-          <button
-            type="button"
-            className="round-action"
-            onClick={() => {
-              play("tap");
-              setDecorate(true);
-            }}
-          >
-            <Icon name="frame" />
-            <span>Đóng khung</span>
-          </button>
-        </div>
-        {msg && <p className="modal-text small">{msg}</p>}
-        <div className="modal-actions wrap">
-          {onKeepColoring && (
-            <button type="button" className="pill-btn ghost" onClick={onKeepColoring}>
-              <Icon name="brush" size={18} /> Tô tiếp
-            </button>
-          )}
-          {onRestart && (
-            <button type="button" className="pill-btn ghost" onClick={onRestart}>
-              <Icon name="refresh" size={18} /> Vẽ lại
-            </button>
-          )}
-          {onHome && (
-            <button type="button" className="pill-btn" onClick={onHome}>
-              <Icon name="home" size={18} /> Trang chủ
-            </button>
-          )}
-        </div>
-      </Modal>
-      {decorate && <DecorateSheet art={canvas} title={title} onClose={() => setDecorate(false)} />}
-    </>
+    <div className="done-dialog" role="dialog" aria-label="Chia sẻ tác phẩm" style={{ backgroundImage: `url(${ui("dialog_bg.webp")})` }}>
+      <button type="button" className="done-close" aria-label="Đóng" onClick={onClose}>
+        <Img name="dialog_close_btn" />
+      </button>
+      <h2 className="done-title">Chia sẻ tác phẩm</h2>
+      <div className="done-cards">
+        <div className="done-work">{url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={url} alt="Tranh của bé" />}</div>
+        {refImage && (
+          <div className="done-ref">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={refImage} alt="Tranh mẫu" />
+          </div>
+        )}
+      </div>
+      {stars !== undefined && <StarsImg n={stars} className="done-stars" />}
+      <div className="done-actions">
+        <button
+          type="button"
+          disabled={!blob}
+          onClick={() => {
+            play("tap");
+            if (!blob) return;
+            downloadBlob(blob, name);
+            flash("Đã lưu ảnh");
+          }}
+        >
+          <Img name="dialog_download_btn" />
+          <span>Lưu</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            play("tap");
+            setDecorate(true);
+          }}
+        >
+          <Img name="dialog_frame_btn" />
+          <span>Đóng khung</span>
+        </button>
+        <button
+          type="button"
+          disabled={!blob}
+          onClick={async () => {
+            play("tap");
+            if (!blob) return;
+            const r = await shareBlob(blob, name, "Tranh của bé");
+            if (r === "downloaded") flash("Máy không hỗ trợ chia sẻ, đã lưu ảnh");
+          }}
+        >
+          <Img name="dialog_share_btn" />
+          <span>Chia sẻ</span>
+        </button>
+      </div>
+      <Toast text={toast} />
+    </div>
   );
 }

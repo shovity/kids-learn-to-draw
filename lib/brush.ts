@@ -8,8 +8,9 @@ export type BrushId = "pen" | "crayon" | "marker" | "nib" | "fountain" | "air" |
 
 export type StrokeOp = { kind: "stroke"; brush: BrushId; color: string; size: number; pts: number[]; seed: number };
 export type FillOp = { kind: "fill"; x: number; y: number; color: string };
-export type ShapeId = "line" | "rect" | "ellipse" | "triangle" | "star" | "heart";
-export type ShapeOp = { kind: "shape"; shape: ShapeId; color: string; size: number; filled: boolean; x0: number; y0: number; x1: number; y1: number };
+/** Hình khối của bảng vẽ: ảnh shape_fill_N / shape_stroke_N (N = 1…30) của app gốc, tô màu và kéo giãn theo khung. */
+export type ShapeOp = { kind: "shape"; shape: number; color: string; filled: boolean; x0: number; y0: number; x1: number; y1: number };
+export const SHAPE_COUNT = 30;
 export type Op = StrokeOp | FillOp | ShapeOp;
 
 export type BrushInfo = { id: BrushId; title: string };
@@ -25,7 +26,7 @@ export const BRUSHES: BrushInfo[] = [
 // Cỡ cọ (đơn vị thế giới). App gốc có 12 mức ic_line_3 … ic_line_45.
 export const SIZES = [3, 5, 7, 9, 12, 15, 18, 21, 25, 30, 37, 45];
 
-const STAMP_FILES = { crayon: "crayon", crayon2: "crayon2", nib: "nib", air: "air" } as const;
+const STAMP_FILES = { crayon: "crayon", crayon2: "crayon2", round: "round", nib: "nib", air: "air" } as const;
 type StampName = keyof typeof STAMP_FILES;
 const stampImages = new Map<StampName, HTMLImageElement>();
 let stampsReady: Promise<void> | null = null;
@@ -50,12 +51,42 @@ export function loadStamps(): Promise<void> {
   return stampsReady;
 }
 
+const shapeImages = new Map<string, HTMLImageElement>();
+let shapesReady: Promise<void> | null = null;
+
+export const shapeUrl = (n: number, filled: boolean) => asset(`shapes/${filled ? "fill" : "stroke"}_${n}.png`);
+
+/** Nạp sẵn 60 ảnh hình khối (phải có trước khi vẽ lại lịch sử khi hoàn tác). */
+export function loadShapes(): Promise<void> {
+  if (!shapesReady) {
+    const jobs: Promise<void>[] = [];
+    for (let n = 1; n <= SHAPE_COUNT; n++)
+      for (const filled of [true, false])
+        jobs.push(
+          new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              shapeImages.set(`${filled ? "fill" : "stroke"}_${n}`, img);
+              resolve();
+            };
+            img.onerror = () => resolve();
+            img.src = shapeUrl(n, filled);
+          }),
+        );
+    shapesReady = Promise.all(jobs).then(() => undefined);
+  }
+  return shapesReady;
+}
+
 const tinted = new Map<string, HTMLCanvasElement>();
 function tintedStamp(name: StampName, color: string): HTMLCanvasElement | null {
+  return tintImage(name, stampImages.get(name), color);
+}
+
+function tintImage(name: string, img: HTMLImageElement | undefined, color: string): HTMLCanvasElement | null {
   const key = `${name}|${color}`;
   let c = tinted.get(key);
   if (c) return c;
-  const img = stampImages.get(name);
   if (!img) return null;
   c = document.createElement("canvas");
   c.width = img.width;
@@ -139,7 +170,7 @@ export class StrokeRenderer {
     this.n++;
     const i = this.n - 1;
     const b = this.op.brush;
-    if (b === "pen" || b === "marker" || b === "eraser") {
+    if (b === "pen" || b === "eraser") {
       if (i === 0) return;
       const g = this.g;
       g.beginPath();
@@ -177,10 +208,11 @@ export class StrokeRenderer {
   private stampTo(i: number, x: number, y: number) {
     const b = this.op.brush;
     const size = this.op.size;
-    const name: StampName = b === "crayon" ? (this.op.seed % 2 ? "crayon" : "crayon2") : b === "nib" ? "nib" : "air";
+    const soft = b === "crayon" || b === "marker";
+    const name: StampName = b === "crayon" ? (this.op.seed % 2 ? "crayon" : "crayon2") : b === "marker" ? "round" : b === "nib" ? "nib" : "air";
     const img = tintedStamp(name, this.op.color);
-    const d = b === "crayon" ? size * 1.15 : b === "nib" ? size * 1.25 : size * 1.8;
-    const spacing = b === "crayon" ? Math.max(1, size / 2) : b === "nib" ? Math.max(0.6, size / 14) : Math.max(0.8, size / 7);
+    const d = soft ? size * 1.15 : b === "nib" ? size * 1.25 : size * 1.8;
+    const spacing = soft ? Math.max(1, size / 2) : b === "nib" ? Math.max(0.6, size / 14) : Math.max(0.8, size / 7);
     const g = this.g;
     const stamp = (sx: number, sy: number) => {
       if (!img) {
@@ -189,7 +221,7 @@ export class StrokeRenderer {
         g.fill();
         return;
       }
-      if (b === "crayon") {
+      if (soft) {
         const a = this.rand() * Math.PI * 2;
         g.save();
         g.translate(sx, sy);
@@ -219,7 +251,7 @@ export class StrokeRenderer {
     const n = p.length / 2;
     const b = this.op.brush;
     const g = this.g;
-    if (b === "pen" || b === "marker" || b === "eraser") {
+    if (b === "pen" || b === "eraser") {
       if (n === 1) {
         g.beginPath();
         g.arc(p[0], p[1], this.op.size / 2, 0, Math.PI * 2);
@@ -257,57 +289,19 @@ export function renderStroke(ctx: CanvasRenderingContext2D, op: StrokeOp, scale:
   r.finish();
 }
 
-export function shapePath(g: CanvasRenderingContext2D | Path2D, op: Pick<ShapeOp, "shape" | "x0" | "y0" | "x1" | "y1">) {
-  const { x0, y0, x1, y1 } = op;
-  const l = Math.min(x0, x1), r = Math.max(x0, x1), t = Math.min(y0, y1), b = Math.max(y0, y1);
-  const cx = (l + r) / 2, cy = (t + b) / 2, w = r - l, h = b - t;
-  switch (op.shape) {
-    case "line":
-      g.moveTo(x0, y0);
-      g.lineTo(x1, y1);
-      break;
-    case "rect":
-      g.rect(l, t, w, h);
-      break;
-    case "ellipse":
-      g.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2);
-      break;
-    case "triangle":
-      g.moveTo(cx, t);
-      g.lineTo(r, b);
-      g.lineTo(l, b);
-      g.closePath();
-      break;
-    case "star":
-      for (let k = 0; k < 10; k++) {
-        const a = -Math.PI / 2 + (k * Math.PI) / 5;
-        const rr = k % 2 === 0 ? 1 : 0.45;
-        const x = cx + (Math.cos(a) * w * rr) / 2, y = cy + (Math.sin(a) * h * rr) / 2 + h * 0.05;
-        if (k === 0) g.moveTo(x, y);
-        else g.lineTo(x, y);
-      }
-      g.closePath();
-      break;
-    case "heart":
-      g.moveTo(cx, b);
-      g.bezierCurveTo(l - w * 0.05, cy + h * 0.1, l + w * 0.05, t - h * 0.15, cx, t + h * 0.28);
-      g.bezierCurveTo(r - w * 0.05, t - h * 0.15, r + w * 0.05, cy + h * 0.1, cx, b);
-      g.closePath();
-      break;
-  }
+/** Vẽ hình khối (toạ độ thế giới) lên ngữ cảnh đã có sẵn phép biến đổi. */
+export function drawShape(g: CanvasRenderingContext2D, op: ShapeOp) {
+  const l = Math.min(op.x0, op.x1), t = Math.min(op.y0, op.y1);
+  const w = Math.abs(op.x1 - op.x0), h = Math.abs(op.y1 - op.y0);
+  if (w < 1 || h < 1) return;
+  const key = `${op.filled ? "fill" : "stroke"}_${op.shape}`;
+  const img = tintImage(`shape_${key}`, shapeImages.get(key), op.color);
+  if (img) g.drawImage(img, l, t, w, h);
 }
 
 export function renderShape(ctx: CanvasRenderingContext2D, op: ShapeOp, scale: number) {
   ctx.save();
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.lineWidth = op.size;
-  ctx.strokeStyle = op.color;
-  ctx.fillStyle = op.color;
-  ctx.beginPath();
-  shapePath(ctx, op);
-  if (op.filled && op.shape !== "line") ctx.fill();
-  else ctx.stroke();
+  drawShape(ctx, op);
   ctx.restore();
 }

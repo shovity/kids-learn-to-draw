@@ -24,6 +24,8 @@ export const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 export const asset = (path: string) => `${BASE}/${path}`;
 export const thumbUrl = (id: string) => asset(`thumbs/${id}.webp`);
 export const frameUrl = (id: number) => asset(`frames/${id}.webp`);
+/** Ảnh giao diện gốc trong public/ui (mặc định .png). */
+export const ui = (name: string) => asset(`ui/${name.includes(".") ? name : name + ".png"}`);
 
 export function findDrawing(id: string): DrawingInfo | undefined {
   return DRAWINGS.find((d) => d.id === id);

@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Baloo_2 } from "next/font/google";
+import { Roboto } from "next/font/google";
 import { BASE } from "@/lib/manifest";
 import "./globals.css";
 
-const font = Baloo_2({ subsets: ["latin", "vietnamese"], weight: ["500", "600", "700", "800"] });
+// app gốc dùng Roboto
+const font = Roboto({ subsets: ["latin", "vietnamese"], weight: ["400", "500", "700"] });
 
 export const metadata: Metadata = {
   title: "Bé Học Vẽ",
@@ -19,7 +20,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#ffb23f",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -6,18 +6,21 @@ const store = typeof indexedDB !== "undefined" ? createStore("kids-learn-to-draw
 
 type Bin = { type: string; data: ArrayBuffer };
 
-export type WorkKind = "learn" | "board" | "photo";
+export type WorkKind = "learn" | "board";
 export type Phase = "trace" | "color" | "done";
 
 export type WorkMeta = {
-  id: string; // learn: id tranh mẫu; board/photo: "board_<time>" / "photo_<time>"
+  id: string; // learn: id tranh mẫu; board: "board_<time>"
   kind: WorkKind;
-  drawingId?: string;
   phase: Phase;
+  /** số nét mẫu đã hiện (bấm "tiếp") */
   step: number;
   progress: number; // 0–100
+  /** số chấm hướng dẫn đã chạm / tổng số chấm đã hiện (để tính sao) */
+  hit?: number;
+  dots?: number;
   bg: string;
-  stars: number;
+  stars: number; // 0–5
   updatedAt: number;
   /** kích thước tờ giấy (bảng vẽ) theo đơn vị thế giới */
   w?: number;
