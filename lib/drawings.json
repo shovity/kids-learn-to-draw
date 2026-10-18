@@ -1,0 +1,932 @@
+[
+ {
+  "id": "animal_001",
+  "category": "animal",
+  "steps": 26,
+  "palette": [
+   "#fcb765",
+   "#e58bb1",
+   "#eda6c7",
+   "#908775",
+   "#fffffd",
+   "#fff6a9",
+   "#353535",
+   "#f5bdc0",
+   "#e8983f"
+  ]
+ },
+ {
+  "id": "animal_002",
+  "category": "animal",
+  "steps": 19,
+  "palette": [
+   "#e0a868",
+   "#5b5b5b",
+   "#f5e999",
+   "#ff9393",
+   "#f9f9f9",
+   "#303030",
+   "#ffcccc",
+   "#ffeb8a"
+  ]
+ },
+ {
+  "id": "animal_003",
+  "category": "animal",
+  "steps": 27,
+  "palette": [
+   "#bce5a1",
+   "#659b42",
+   "#528c2c",
+   "#cfdd7e",
+   "#fefff3"
+  ]
+ },
+ {
+  "id": "animal_004",
+  "category": "animal",
+  "steps": 32,
+  "palette": [
+   "#d35742",
+   "#f9f9f9",
+   "#fff4ee",
+   "#fffdfd",
+   "#515151",
+   "#ef7d62",
+   "#594745",
+   "#705e5c",
+   "#d15d46"
+  ]
+ },
+ {
+  "id": "animal_005",
+  "category": "animal",
+  "steps": 18,
+  "palette": [
+   "#66d4e3",
+   "#cd90d5",
+   "#9097f2",
+   "#98c9ea",
+   "#ff9247",
+   "#f97838",
+   "#ff9148",
+   "#f47a37",
+   "#ffe5a0",
+   "#fe6553",
+   "#f9f9f9",
+   "#ecc252",
+   "#fcb166"
+  ]
+ },
+ {
+  "id": "animal_006",
+  "category": "animal",
+  "steps": 18,
+  "palette": [
+   "#4d1200",
+   "#ffcc81",
+   "#cce9e4",
+   "#7accbc",
+   "#f9f9f9",
+   "#ffe0b6",
+   "#fafffe",
+   "#3a3a3a"
+  ]
+ },
+ {
+  "id": "animal_007",
+  "category": "animal",
+  "steps": 38,
+  "palette": [
+   "#56524f",
+   "#e7ddd4",
+   "#fffcfa",
+   "#f9f1ea",
+   "#ffdcfc",
+   "#f9f9f9"
+  ]
+ },
+ {
+  "id": "animal_008",
+  "category": "animal",
+  "steps": 34,
+  "palette": [
+   "#604d49",
+   "#fffcfa",
+   "#ffc184",
+   "#ffb7a9",
+   "#3d3d3d"
+  ]
+ },
+ {
+  "id": "fruit_001",
+  "category": "fruit",
+  "steps": 15,
+  "palette": [
+   "#75ad0b",
+   "#95d13c",
+   "#ffc400",
+   "#ffd740",
+   "#ffd652",
+   "#88c125"
+  ]
+ },
+ {
+  "id": "fruit_002",
+  "category": "fruit",
+  "steps": 21,
+  "palette": [
+   "#fdf4b1",
+   "#fff8eb",
+   "#f9f9f9",
+   "#ffc655",
+   "#775200",
+   "#ffd976"
+  ]
+ },
+ {
+  "id": "fruit_003",
+  "category": "fruit",
+  "steps": 10,
+  "palette": [
+   "#55630e",
+   "#fff2bb",
+   "#ffe473",
+   "#86682a"
+  ]
+ },
+ {
+  "id": "fruit_004",
+  "category": "fruit",
+  "steps": 17,
+  "palette": [
+   "#a95c66",
+   "#95b359",
+   "#a4c44e",
+   "#b1d365",
+   "#f8848d",
+   "#f2eae8",
+   "#a45b64"
+  ]
+ },
+ {
+  "id": "fruit_005",
+  "category": "fruit",
+  "steps": 25,
+  "palette": [
+   "#6ebc2a",
+   "#4abadd",
+   "#315a8e",
+   "#214e7f",
+   "#4ecdea",
+   "#174977",
+   "#3a9aca",
+   "#49b2db"
+  ]
+ },
+ {
+  "id": "fruit_006",
+  "category": "fruit",
+  "steps": 14,
+  "palette": [
+   "#d3b251",
+   "#f8ffd5",
+   "#fff364",
+   "#5d8203",
+   "#f9f9f9",
+   "#8ec94b",
+   "#74a319"
+  ]
+ },
+ {
+  "id": "fruit_007",
+  "category": "fruit",
+  "steps": 14,
+  "palette": [
+   "#57c780",
+   "#f51a45",
+   "#32b25d",
+   "#2d0601"
+  ]
+ },
+ {
+  "id": "fruit_008",
+  "category": "fruit",
+  "steps": 7,
+  "palette": [
+   "#ffdf72",
+   "#f9f9f9",
+   "#fff5d9",
+   "#bae289"
+  ]
+ },
+ {
+  "id": "food_001",
+  "category": "food",
+  "steps": 11,
+  "palette": [
+   "#f2fafd",
+   "#e8687e",
+   "#7ccad5",
+   "#f9f9f9",
+   "#f7c2c9",
+   "#101010",
+   "#95d4ec"
+  ]
+ },
+ {
+  "id": "food_002",
+  "category": "food",
+  "steps": 11,
+  "palette": [
+   "#f1c665",
+   "#fff9f0",
+   "#b5e0ea",
+   "#343535",
+   "#e94e71",
+   "#fafafa",
+   "#3cbcd6",
+   "#e85f79",
+   "#323333"
+  ]
+ },
+ {
+  "id": "food_003",
+  "category": "food",
+  "steps": 18,
+  "palette": [
+   "#b28573",
+   "#fafafa",
+   "#e85f79",
+   "#e1aacc",
+   "#f1ee79",
+   "#373838",
+   "#f1c769",
+   "#f19465",
+   "#75cae9",
+   "#9dcc6f"
+  ]
+ },
+ {
+  "id": "food_004",
+  "category": "food",
+  "steps": 8,
+  "palette": [
+   "#bcddb1",
+   "#f8d079",
+   "#f09091",
+   "#3f3f3f"
+  ]
+ },
+ {
+  "id": "food_005",
+  "category": "food",
+  "steps": 12,
+  "palette": [
+   "#efca6f",
+   "#fafafa",
+   "#e34140",
+   "#3c3d3d",
+   "#ecd520"
+  ]
+ },
+ {
+  "id": "food_006",
+  "category": "food",
+  "steps": 13,
+  "palette": [
+   "#eb6481",
+   "#ceafa0",
+   "#b28573",
+   "#e52e51",
+   "#393a3a",
+   "#f9f9f9"
+  ]
+ },
+ {
+  "id": "food_007",
+  "category": "food",
+  "steps": 11,
+  "palette": [
+   "#efca6f",
+   "#e8687e",
+   "#68b561",
+   "#b28573",
+   "#fafafa",
+   "#ea627f",
+   "#343535"
+  ]
+ },
+ {
+  "id": "food_008",
+  "category": "food",
+  "steps": 10,
+  "palette": [
+   "#a6d9e2",
+   "#ea6172",
+   "#3f3f3f",
+   "#fafafa",
+   "#a3855e"
+  ]
+ },
+ {
+  "id": "flower_001",
+  "category": "flower",
+  "steps": 20,
+  "palette": [
+   "#b9e1ad",
+   "#feec98",
+   "#fecd7e",
+   "#c29a9a",
+   "#fcc665",
+   "#f9f9f9",
+   "#95cc81"
+  ]
+ },
+ {
+  "id": "flower_002",
+  "category": "flower",
+  "steps": 23,
+  "palette": [
+   "#fab0b1",
+   "#91f0ac",
+   "#ff99ac",
+   "#7fc48b",
+   "#f9f9f9",
+   "#ffaebf",
+   "#efe567",
+   "#ece99c"
+  ]
+ },
+ {
+  "id": "flower_003",
+  "category": "flower",
+  "steps": 18,
+  "palette": [
+   "#72a00b",
+   "#f3e9df",
+   "#d948b1",
+   "#84be1e",
+   "#fadde7",
+   "#f9f9f9"
+  ]
+ },
+ {
+  "id": "flower_004",
+  "category": "flower",
+  "steps": 16,
+  "palette": [
+   "#6f9b21",
+   "#fff8e1",
+   "#f2e7c7",
+   "#ffff73",
+   "#8eba49",
+   "#fffae6",
+   "#f4e6c1"
+  ]
+ },
+ {
+  "id": "flower_005",
+  "category": "flower",
+  "steps": 23,
+  "palette": [
+   "#fc6522",
+   "#ef5701",
+   "#f95300",
+   "#ffdc48",
+   "#f9f9f9",
+   "#ff865c",
+   "#5c8827",
+   "#ff7640",
+   "#c3e577",
+   "#91bc53",
+   "#a5c66a"
+  ]
+ },
+ {
+  "id": "flower_006",
+  "category": "flower",
+  "steps": 17,
+  "palette": [
+   "#f993b3",
+   "#797f50",
+   "#f9f9f9",
+   "#72ab78",
+   "#fce36b",
+   "#ffdbe5"
+  ]
+ },
+ {
+  "id": "flower_007",
+  "category": "flower",
+  "steps": 24,
+  "palette": [
+   "#fe9695",
+   "#32ad35",
+   "#f56e6b",
+   "#ffa9a9",
+   "#63c669",
+   "#ffd950",
+   "#ff7f7e"
+  ]
+ },
+ {
+  "id": "flower_008",
+  "category": "flower",
+  "steps": 27,
+  "palette": [
+   "#a58e6f",
+   "#ff7ba1",
+   "#ff8faa",
+   "#f9f9f9",
+   "#ffd766",
+   "#997d5b",
+   "#ffb8c7",
+   "#f79ead",
+   "#ffe079",
+   "#9b7853"
+  ]
+ },
+ {
+  "id": "plant_001",
+  "category": "plant",
+  "steps": 28,
+  "palette": [
+   "#fb5756",
+   "#ff8585",
+   "#ffff5f",
+   "#d7f585",
+   "#edc5a1",
+   "#f9f9f9",
+   "#d69a76",
+   "#a86243",
+   "#716162",
+   "#e8bc7b",
+   "#9cd384",
+   "#6ba550"
+  ]
+ },
+ {
+  "id": "plant_002",
+  "category": "plant",
+  "steps": 23,
+  "palette": [
+   "#a3d880",
+   "#f2edeb",
+   "#d7c6bd",
+   "#94ce6e",
+   "#a5827c",
+   "#5c893f",
+   "#f9f9f9"
+  ]
+ },
+ {
+  "id": "plant_003",
+  "category": "plant",
+  "steps": 27,
+  "palette": [
+   "#68c42c",
+   "#4ca015",
+   "#feeae1",
+   "#ffe2d7",
+   "#ffcfc0",
+   "#603d39",
+   "#598241",
+   "#86ce57",
+   "#f9f9f9",
+   "#a5827c",
+   "#5c7e4b",
+   "#3c7a14",
+   "#6e9952",
+   "#9bdb71"
+  ]
+ },
+ {
+  "id": "plant_004",
+  "category": "plant",
+  "steps": 26,
+  "palette": [
+   "#32ae4a",
+   "#79d384",
+   "#fffeca",
+   "#fffce9",
+   "#ff5533",
+   "#84b272",
+   "#f9f9f9",
+   "#efe8ca",
+   "#ffffde"
+  ]
+ },
+ {
+  "id": "plant_005",
+  "category": "plant",
+  "steps": 26,
+  "palette": [
+   "#f9f9f9",
+   "#94ed8c",
+   "#e89c56",
+   "#ffbc78",
+   "#c0e756",
+   "#6fb76d",
+   "#ff9ff4"
+  ]
+ },
+ {
+  "id": "plant_006",
+  "category": "plant",
+  "steps": 12,
+  "palette": [
+   "#f9f9f9",
+   "#fd8ac0",
+   "#64d057",
+   "#dcfa7c",
+   "#d88b46",
+   "#5bd649"
+  ]
+ },
+ {
+  "id": "plant_007",
+  "category": "plant",
+  "steps": 22,
+  "palette": [
+   "#e5e4d1",
+   "#ffffeb",
+   "#f9f9f9",
+   "#b3d741",
+   "#3eaf1e",
+   "#ea8e50",
+   "#67c42c"
+  ]
+ },
+ {
+  "id": "plant_008",
+  "category": "plant",
+  "steps": 14,
+  "palette": [
+   "#57c972",
+   "#846e68",
+   "#71c683",
+   "#f4aa6e",
+   "#65d179",
+   "#3daa4d",
+   "#93cfa8",
+   "#5faa76",
+   "#66c681",
+   "#f9f9f9"
+  ]
+ },
+ {
+  "id": "transport_001",
+  "category": "transport",
+  "steps": 18,
+  "palette": [
+   "#91c285",
+   "#ed786a",
+   "#97cb7f",
+   "#f7cf6c",
+   "#b6bee1",
+   "#cae7e2",
+   "#fafafa",
+   "#658dc5"
+  ]
+ },
+ {
+  "id": "transport_002",
+  "category": "transport",
+  "steps": 26,
+  "palette": [
+   "#566a7a",
+   "#7e95a7",
+   "#f6e370",
+   "#f6c475",
+   "#787fbd",
+   "#fafafa",
+   "#a7dae7",
+   "#90cdae",
+   "#f2985b",
+   "#7fabca",
+   "#b0deeb"
+  ]
+ },
+ {
+  "id": "transport_003",
+  "category": "transport",
+  "steps": 17,
+  "palette": [
+   "#f1e94b",
+   "#652a26",
+   "#e0f1f1",
+   "#c0af9e",
+   "#fdfdfe",
+   "#d93c35",
+   "#e8423f"
+  ]
+ },
+ {
+  "id": "transport_004",
+  "category": "transport",
+  "steps": 30,
+  "palette": [
+   "#c7e8fa",
+   "#e6f4f7",
+   "#ed7b7d",
+   "#444b55",
+   "#6c7da6",
+   "#f4f4f4",
+   "#d8d8d8",
+   "#84b6e2",
+   "#f7cd80",
+   "#bcbcbc",
+   "#989798",
+   "#767676"
+  ]
+ },
+ {
+  "id": "transport_005",
+  "category": "transport",
+  "steps": 21,
+  "palette": [
+   "#f7d563",
+   "#553c27",
+   "#f6af38",
+   "#f9f9f9",
+   "#c8e7ef"
+  ]
+ },
+ {
+  "id": "transport_006",
+  "category": "transport",
+  "steps": 25,
+  "palette": [
+   "#3e3e3e",
+   "#fdfdfe",
+   "#f2eb2e",
+   "#176db7",
+   "#d26a1b",
+   "#fafafa",
+   "#1373bc"
+  ]
+ },
+ {
+  "id": "transport_007",
+  "category": "transport",
+  "steps": 24,
+  "palette": [
+   "#e34049",
+   "#fafafa",
+   "#6aaadd",
+   "#bddcf4",
+   "#bdbdbd"
+  ]
+ },
+ {
+  "id": "transport_008",
+  "category": "transport",
+  "steps": 22,
+  "palette": [
+   "#d1ecf9",
+   "#aadbec",
+   "#6d7078",
+   "#abdced",
+   "#90cae1",
+   "#cecece",
+   "#869fd1"
+  ]
+ },
+ {
+  "id": "dress_001",
+  "category": "dress",
+  "steps": 17,
+  "palette": [
+   "#f9788e",
+   "#fcfcfc",
+   "#f7e579",
+   "#e4e4e4",
+   "#e8bfa3",
+   "#bc8e6f"
+  ]
+ },
+ {
+  "id": "dress_002",
+  "category": "dress",
+  "steps": 22,
+  "palette": [
+   "#feb8ae",
+   "#c97062",
+   "#7773a6",
+   "#9d9cef",
+   "#918ad8",
+   "#ffd396",
+   "#f9f9f9"
+  ]
+ },
+ {
+  "id": "dress_003",
+  "category": "dress",
+  "steps": 21,
+  "palette": [
+   "#fffff8",
+   "#ffcccc",
+   "#ffcaca",
+   "#f4b0b0",
+   "#ffffcc",
+   "#f9f9f9"
+  ]
+ },
+ {
+  "id": "dress_004",
+  "category": "dress",
+  "steps": 18,
+  "palette": [
+   "#efb9da",
+   "#fcfcfc",
+   "#f4b1d2",
+   "#f9cae8",
+   "#fcf9d9",
+   "#d35fa1",
+   "#fffab6"
+  ]
+ },
+ {
+  "id": "dress_005",
+  "category": "dress",
+  "steps": 32,
+  "palette": [
+   "#f9c73a",
+   "#da7fdd",
+   "#ffde76",
+   "#b559b5",
+   "#d88fd6",
+   "#ffda56",
+   "#f9f9f9"
+  ]
+ },
+ {
+  "id": "dress_006",
+  "category": "dress",
+  "steps": 18,
+  "palette": [
+   "#ffdd7d",
+   "#6eb0ff",
+   "#f9f9f9",
+   "#52a9ff",
+   "#a4c9fe",
+   "#fcdfb1",
+   "#eac27c",
+   "#f7f7f7"
+  ]
+ },
+ {
+  "id": "dress_007",
+  "category": "dress",
+  "steps": 17,
+  "palette": [
+   "#dadada",
+   "#f0fbff",
+   "#fcfcfc",
+   "#ededed",
+   "#8cc7ff",
+   "#e4ffff",
+   "#80c6ff",
+   "#f9f9f9",
+   "#5fbeff"
+  ]
+ },
+ {
+  "id": "dress_008",
+  "category": "dress",
+  "steps": 37,
+  "palette": [
+   "#fcfcfc",
+   "#fcc0cc",
+   "#f9f9f9",
+   "#c4f5f2",
+   "#ff8dae",
+   "#fbf79c",
+   "#ffa1c5"
+  ]
+ },
+ {
+  "id": "art_001",
+  "category": "art",
+  "steps": 20,
+  "palette": [
+   "#f9f9f9",
+   "#feb743",
+   "#ffee5a",
+   "#fcab35",
+   "#ffb655"
+  ]
+ },
+ {
+  "id": "art_002",
+  "category": "art",
+  "steps": 10,
+  "palette": [
+   "#6d818a",
+   "#7ac1f5",
+   "#9dcc88",
+   "#fa8981",
+   "#f4fd7e",
+   "#fcfcfc",
+   "#fcad6b",
+   "#f9f9f9"
+  ]
+ },
+ {
+  "id": "art_003",
+  "category": "art",
+  "steps": 18,
+  "palette": [
+   "#ffdc6c",
+   "#ffb15c",
+   "#fb7373",
+   "#f1ead7",
+   "#ad9d90",
+   "#ece5db",
+   "#eed986",
+   "#e8ded1"
+  ]
+ },
+ {
+  "id": "art_004",
+  "category": "art",
+  "steps": 16,
+  "palette": [
+   "#2697b2",
+   "#898989",
+   "#3eaacc",
+   "#515558",
+   "#5ec3ea",
+   "#757575",
+   "#aee0ff",
+   "#76d1ff",
+   "#64a4c7",
+   "#f6d48c"
+  ]
+ },
+ {
+  "id": "art_005",
+  "category": "art",
+  "steps": 14,
+  "palette": [
+   "#36adc9",
+   "#f9f9f9",
+   "#daeff4",
+   "#67cde8",
+   "#fff444"
+  ]
+ },
+ {
+  "id": "art_006",
+  "category": "art",
+  "steps": 22,
+  "palette": [
+   "#b2b2b2",
+   "#88a8e2",
+   "#bccff7",
+   "#f9f9f9",
+   "#7fc6dd",
+   "#b5e9fe",
+   "#fcf6c4",
+   "#91a3b7",
+   "#b9d3ec",
+   "#9fe8ff",
+   "#a5a5a5",
+   "#f8feff",
+   "#dcf8ff",
+   "#d3d3d3",
+   "#efefef"
+  ]
+ },
+ {
+  "id": "art_007",
+  "category": "art",
+  "steps": 21,
+  "palette": [
+   "#fd761e",
+   "#fdf025",
+   "#fd9e1f",
+   "#ff3636",
+   "#f9f9f9",
+   "#39c5fa",
+   "#f28d14",
+   "#8392c9",
+   "#fdfeff",
+   "#f9f4ae"
+  ]
+ },
+ {
+  "id": "art_008",
+  "category": "art",
+  "steps": 18,
+  "palette": [
+   "#f9f9f9",
+   "#feb2b2",
+   "#ef8484",
+   "#ffcccc",
+   "#f7a1a1",
+   "#333333"
+  ]
+ }
+]
