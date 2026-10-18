@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-// GitHub Pages phục vụ dưới /<repo>/ → workflow đặt NEXT_PUBLIC_BASE_PATH=/kids-coloring; local để trống.
+// GitHub Pages phục vụ dưới /<repo>/ → workflow đặt NEXT_PUBLIC_BASE_PATH=/kids-learn-to-draw; local để trống.
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const nextConfig: NextConfig = {
